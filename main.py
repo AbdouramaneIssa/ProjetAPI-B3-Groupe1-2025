@@ -1,30 +1,27 @@
 # main.py
 from fastapi import FastAPI, HTTPException, Path
-from typing import List, Optional
-import uuid
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+from typing import List, Optional # Ajoutez List et Optional pour les imports
+import os
+import uuid # Ajoutez uuid pour la fonction create_project
+from pydantic import BaseModel # Ajoutez BaseModel si vous gardez la simulation
 
 # Les imports locaux sont nécessaires et supposés exister dans le projet
 # Votre Chef de Groupe a défini ces modules :
-# from schemas import ProjectCreate, Project, GradeUpdate
-# from db import load_db, save_db
-# Puisque je n'ai pas le contenu de schemas.py et db.py, je les garde.
-
-# J'ai ajouté ces lignes ici pour simuler les imports manquants si vous n'avez pas ces fichiers
-# Si votre chef de groupe a bien créé ces fichiers, vous pouvez ignorer cette partie
-# MAIS si votre API ne démarre pas, c'est que ces fichiers manquent ou sont mal nommés.
 try:
     from schemas import ProjectCreate, Project, GradeUpdate
     from db import load_db, save_db
 except ImportError:
     # Ceci est une solution temporaire pour les tests si les fichiers n'existent pas encore
     print("ATTENTION: Les fichiers schemas.py ou db.py sont manquants. Le code pourrait échouer au lancement.")
-
+    
     # --- SIMULATION DE db.py (temporaire) ---
     def load_db(): return []
     def save_db(data): pass
-
+    
     # --- SIMULATION DE schemas.py (temporaire) ---
-    from pydantic import BaseModel
+    # Ces définitions sont nécessaires si les imports échouent
     class ProjectCreate(BaseModel):
         studentName: str
         course: str
@@ -34,35 +31,83 @@ except ImportError:
         grade: Optional[int] = None
     class GradeUpdate(BaseModel):
         grade: int
-# Fin de la simulation temporaire
 
+# Définir le chemin de base pour les fichiers statiques
+STATIC_DIR = "static"
 
+# Créer l'application FastAPI
 app = FastAPI(
     title="ProjetAPI - Gestion des Projets Étudiants",
+    description="API REST pour la soumission et la notation de projets étudiants.",
     version="1.0.0",
 )
 
+# Servir les fichiers statiques (HTML, CSS, JS)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-@app.get("/")
+# Page HTML principale (interface web)
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+# Endpoint d'information basique
+@app.get("/docs", include_in_schema=True)
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Bienvenue sur l'API ProjetAPI. Accédez à /docs pour la documentation Swagger."}
 
 
-@app.post("/projects", response_model=Project, tags=["Projets"])
+# ============================================================
+# ✅ ZONE API — LES MEMBRES DU GROUPE DOIVENT COLLER LEUR CODE ICI
+# ============================================================
+
+
+# ------------------------------------------------------------
+# ✅ 1️⃣ Abdouramane — POST /projects
+# Permet d'ajouter un nouveau projet étudiant dans la base de données.
+@app.post("/projects", response_model=Project, tags=["Projets"], status_code=201) # Fusion des deux versions ici
 def create_project(project: ProjectCreate):
     projects = load_db()
+    # import uuid a été déplacé en haut
     new_id = str(uuid.uuid4())[:8]
     new_project = {
         "id": new_id,
-        **project.model_dump(),  # Utiliser model_dump() pour Pydantic v2
+        **project.model_dump(),
         "grade": None,
     }
     projects.append(new_project)
     save_db(projects)
     return Project(**new_project)
+# ------------------------------------------------------------
 
 
-# code de pouhe
+# ------------------------------------------------------------
+# ✅ 2️⃣ Elbachir — GET /projects
+# COLLER ICI ton endpoint list_projects()
+@app.get("/projects", response_model=List[Project], tags=["Projets"])
+def list_projects():
+    return [Project(**p) for p in load_db()]
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 3️⃣ Kelly — GET /projects/{id}
+# COLLER ICI ton endpoint get_project()
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
+@app.get("/projects/course/{course_name}", response_model=List[Project], tags=["Projets"])
+def list_projects_by_course(course_name: str):
+    projects = load_db()
+    filtered = [p for p in projects if p["course"].lower() == course_name.lower()]
+    return [Project(**p) for p in filtered]
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 5️⃣ Elie-Junior — PUT /projects/{id}/grade (VOTRE CODE)
+# COLLER ICI ton endpoint grade_project()
 @app.put("/projects/{project_id}/grade", response_model=Project, tags=["Projets"])
 def grade_project(
     # ARGUMENT OBLIGATOIRE EN PREMIER (CORRECTION DE LA SYNTAXE PYTHON)
@@ -83,8 +128,13 @@ def grade_project(
 
     # Retourne le modèle Pydantic mis à jour
     return Project(**project)
+# ------------------------------------------------------------
 
 
-@app.get("/projects", response_model=List[Project], tags=["Projets"])
-def list_projects():
-    return [Project(**p) for p in load_db()]
+# ------------------------------------------------------------
+# ✅ 6️⃣ Booz — DELETE /projects/{id}
+# COLLER ICI ton endpoint delete_project()
+# ------------------------------------------------------------
+
+
+# ✅ FIN DES ZONES — NE PAS MODIFIER LE RESTE DU FICHIER
