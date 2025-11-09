@@ -57,7 +57,6 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
-#from typing import List
 
 @app.get("/projects/course/{course_name}", response_model=List[Project])
 def list_projects_by_course(course_name: str):
