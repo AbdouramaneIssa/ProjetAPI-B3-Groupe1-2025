@@ -45,7 +45,10 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 2️⃣ Elbachir — GET /projects
-# COLLER ICI ton endpoint list_projects()
+
+@app.get("/projects", response_model=List[Project])
+def list_projects():
+    return [Project(**p) for p in load_db()]
 # ------------------------------------------------------------
 
 
