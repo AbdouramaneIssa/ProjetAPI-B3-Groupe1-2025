@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pydantic
+black
+flake8
+pre-commit
+mypy
