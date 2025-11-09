@@ -40,6 +40,20 @@ def read_root():
 # ------------------------------------------------------------
 # ✅ 1️⃣ Abdouramane — POST /projects
 # COLLER ICI ton endpoint POST /projects
+@app.post("/projects", response_model=Project, status_code=201)
+def create_project(project: ProjectCreate):
+    projects = load_db()
+    import uuid
+    new_id = str(uuid.uuid4())[:8]
+    new_project = {
+        "id": new_id,
+        **project.model_dump(),
+        "grade": None,
+    }
+    projects.append(new_project)
+    save_db(projects)
+    return Project(**new_project)
+
 # ------------------------------------------------------------
 
 
