@@ -82,8 +82,8 @@ def create_project(project: ProjectCreate):
 
 # ------------------------------------------------------------
 # ✅ 2️⃣ Elbachir — GET /projects
-# COLLER ICI ton endpoint list_projects()
-@app.get("/projects", response_model=List[Project], tags=["Projets"])
+
+@app.get("/projects", response_model=List[Project])
 def list_projects():
     return [Project(**p) for p in load_db()]
 # ------------------------------------------------------------
