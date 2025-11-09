@@ -1,49 +1,76 @@
 # main.py
-from fastapi import FastAPI, HTTPException, Path
-from typing import List, Optional
-import uuid
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+import os
 
 # Imports locaux
 from schemas import ProjectCreate, Project, GradeUpdate
 from db import load_db, save_db
 
-app = FastAPI()
+# Définir le chemin de base pour les fichiers statiques
+STATIC_DIR = "static"
 
+# Créer l'application FastAPI
+app = FastAPI(
+    title="ProjetAPI - Gestion des Projets Étudiants",
+    description="API REST pour la soumission et la notation de projets étudiants.",
+    version="1.0.0",
+)
 
-@app.get("/")
+# Servir les fichiers statiques (HTML, CSS, JS)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Page HTML principale (interface web)
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+# Endpoint d'information basique
+@app.get("/docs", include_in_schema=True)
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Bienvenue sur l'API ProjetAPI. Accédez à /docs pour la documentation Swagger."}
 
 
-@app.post("/projects", response_model=Project)
-def create_project(project: ProjectCreate):
-    projects = load_db()
-    new_id = str(uuid.uuid4())[:8]
-    new_project = {
-        "id": new_id,
-        **project.model_dump(),  # Utiliser model_dump() pour Pydantic v2
-        "grade": None,
-    }
-    projects.append(new_project)
-    save_db(projects)
-    return Project(**new_project)
+# ============================================================
+# ✅ ZONE API — LES MEMBRES DU GROUPE DOIVENT COLLER LEUR CODE ICI
+# ============================================================
 
 
-@app.put("/projects/{project_id}/grade", response_model=Project)
-def grade_project(
-    project_id: str = Path(..., description="ID du projet à noter"),
-    grade_data: Optional[GradeUpdate] = None,
-):
-    projects = load_db()
-    project = next((p for p in projects if p["id"] == project_id), None)
-    if not project:
-        raise HTTPException(status_code=404, detail="Projet non trouvé")
-    if grade_data:
-        project["grade"] = grade_data.grade
-    save_db(projects)
-    return Project(**project)
+# ------------------------------------------------------------
+# ✅ 1️⃣ Abdouramane — POST /projects
+# COLLER ICI ton endpoint POST /projects
+# ------------------------------------------------------------
 
 
-@app.get("/projects", response_model=List[Project])
-def list_projects():
-    return [Project(**p) for p in load_db()]
+# ------------------------------------------------------------
+# ✅ 2️⃣ Elbachir — GET /projects
+# COLLER ICI ton endpoint list_projects()
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 3️⃣ Kelly — GET /projects/{id}
+# COLLER ICI ton endpoint get_project()
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
+# COLLER ICI ton endpoint list_projects_by_course()
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 5️⃣ Elie-Junior — PUT /projects/{id}/grade
+# COLLER ICI ton endpoint grade_project()
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# ✅ 6️⃣ Booz — DELETE /projects/{id}
+# COLLER ICI ton endpoint delete_project()
+# ------------------------------------------------------------
+
+
+# ✅ FIN DES ZONES — NE PAS MODIFIER LE RESTE DU FICHIER
