@@ -57,7 +57,13 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
-# COLLER ICI ton endpoint list_projects_by_course()
+
+@app.get("/projects/course/{course_name}", response_model=List[Project])
+def list_projects_by_course(course_name: str):
+    projects = load_db()
+    filtered = [p for p in projects if p["course"].lower() == course_name.lower()]
+    return [Project(**p) for p in filtered]
+
 # ------------------------------------------------------------
 
 
