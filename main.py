@@ -40,6 +40,7 @@ def read_root():
 # ------------------------------------------------------------
 # ✅ 1️⃣ Abdouramane — POST /projects
 # COLLER ICI ton endpoint POST /projects
+# Permet d'ajouter un nouveau projet étudiant dans la base de données.
 @app.post("/projects", response_model=Project, status_code=201)
 def create_project(project: ProjectCreate):
     projects = load_db()
