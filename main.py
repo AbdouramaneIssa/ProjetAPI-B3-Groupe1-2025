@@ -63,7 +63,22 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 5️⃣ Elie-Junior — PUT /projects/{id}/grade
-# COLLER ICI ton endpoint grade_project()
+@app.put("/projects/{project_id}/grade", response_model=Project)
+def grade_project(project_id: str, grade_data: GradeUpdate):
+    projects = load_db()
+
+    project = next((p for p in projects if p["id"] == project_id), None)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+
+    if not (0 <= grade_data.grade <= 20):
+        raise HTTPException(status_code=400, detail="La note doit être entre 0 et 20")
+
+    project["grade"] = grade_data.grade
+    save_db(projects)
+
+    return Project(**project)
+
 # ------------------------------------------------------------
 
 
