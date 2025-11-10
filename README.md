@@ -1,18 +1,24 @@
+# 🚀 ProjetAPI – Gestion des Projets Étudiants (B3 - Groupe 1 - 2025)
 
-# Projet FastAPI
+Bienvenue dans **ProjetAPI**, une application **FastAPI** permettant la gestion, la soumission et la notation de projets étudiants.
 
-Ce projet utilise **FastAPI**, un framework web moderne et performant pour créer des APIs en Python. Ce fichier README fournit les instructions nécessaires pour configurer et lancer le projet localement.
+Ce projet intègre un **pipeline complet CI/CD GitHub Actions**, des **revues de code automatisées par IA (Gemini)** et un **système pre-commit** pour garantir la qualité du code.
 
-## Prérequis
+---
 
-- **Python** : Version 3.8 ou supérieure
-- **pip** : Gestionnaire de paquets Python
-- Un terminal (ou une invite de commande)
+## 🎯 Objectifs du projet
 
-## Installation
+- Créer une **API REST robuste** pour gérer les projets étudiants  
+- Garantir la **qualité du code** via linting, typage et hooks pre-commit  
+- Automatiser les **revues de code avec IA** (Gemini API)  
+- Envoyer automatiquement des **notifications par e-mail** à l’équipe  
+- Livrer le projet avec un **pipeline CI/CD complet**
 
-Suivez ces étapes pour configurer l'environnement de développement.
+---
 
-### 1. Créer un environnement virtuel
+## ⚙️ Installation et Lancement
 
-Créez un environnement virtuel pour isoler les dépendances du projet.
+### 1️⃣ Cloner le dépôt
+```bash
+git clone https://github.com/AbdouramaneIssa/ProjetAPI-B3-Groupe1-2025.git
+cd ProjetAPI-B3-Groupe1-2025
