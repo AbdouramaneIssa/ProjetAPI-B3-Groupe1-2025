@@ -94,6 +94,14 @@ def list_projects():
 # ------------------------------------------------------------
 # ✅ 3️⃣ Kelly — GET /projects/{id}
 # COLLER ICI ton endpoint get_project()
+@app.get("/projects/{project_id}", response_model=Project)
+def get_project(project_id: str):
+    projects = load_db()
+    project = next((p for p in projects if p["id"] == project_id), None)
+    if not project:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+    return Project(**project)
 # ------------------------------------------------------------
 
 
