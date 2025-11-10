@@ -11,38 +11,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ------------------------------------------------------------
+      # Étape 1 : Récupération du code de la PR
+      # ------------------------------------------------------------
       - name: Checkout du code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # ⚠️ Très important pour que git diff fonctionne correctement
+          fetch-depth: 0  # indispensable pour git diff
 
+      # ------------------------------------------------------------
+      # Étape 2 : Récupération du diff
+      # ------------------------------------------------------------
       - name: Obtenir le diff de la PR
         id: diff
+        shell: bash
         run: |
           echo "📄 Récupération du diff de la PR..."
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          # Récupération des commits exacts pour éviter le "no merge base"
           base_sha=${{ github.event.pull_request.base.sha }}
           head_sha=${{ github.event.pull_request.head.sha }}
           echo "Comparaison entre $base_sha et $head_sha"
           git diff $base_sha $head_sha > diff.txt
-          cat diff.txt
+
+          # Si le diff est vide, arrêter le workflow pour éviter un appel inutile à Gemini
+          if [ ! -s diff.txt ]; then
+            echo "✅ Aucun changement détecté — fin du workflow."
+            exit 0
+          fi
+
+          # Sauvegarde du contenu du diff dans une variable d'environnement
           echo "diff_content<<EOF" >> $GITHUB_ENV
           cat diff.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Appeler l'API Gemini pour l'analyse
+      # ------------------------------------------------------------
+      # Étape 3 : Appel de l’API Gemini pour l’analyse du code
+      # ------------------------------------------------------------
+      - name: Appeler l'API Gemini pour analyse du code
         id: llm_call
+        shell: bash
         run: |
-          echo "🤖 Appel à l'API Gemini..."
+          echo "Appel à l'API Gemini..."
           response=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-          -H "Content-Type: application/json" \
-          -d "{\"contents\": [{\"parts\":[{\"text\": \"Tu es un relecteur de code expert. Analyse ce diff de code et écris un commentaire constructif en français :\n\n${{ env.diff_content }}\"}]}]}" \
-          | jq -r '.candidates[0].content.parts[0].text')
+            -H "Content-Type: application/json" \
+            -d "{\"contents\": [{\"parts\":[{\"text\": \"Tu es un relecteur de code expert. Analyse ce diff et rédige une courte revue en français, en listant les erreurs éventuelles et les améliorations possibles :\\n\\n${{ env.diff_content }}\"}]}]}" \
+            | jq -r '.candidates[0].content.parts[0].text')
+
+          # Si aucune réponse n'est retournée, créer un message par défaut
+          if [ -z "$response" ] || [ "$response" = "null" ]; then
+            response="(Aucune réponse reçue de l'API Gemini)"
+          fi
+
           echo "response<<EOF" >> $GITHUB_ENV
           echo "$response" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      # ------------------------------------------------------------
+      # Étape 4 : Commentaire automatique sur la Pull Request
+      # ------------------------------------------------------------
       - name: Commenter sur la Pull Request
         uses: actions/github-script@v7
         with:
@@ -55,6 +81,9 @@ jobs:
               body: `🤖 **Revue LLM pour @${{ github.actor }}**\n\n${process.env.response}`
             })
 
+      # ------------------------------------------------------------
+      # Étape 5 : Envoi d'un e-mail de notification
+      # ------------------------------------------------------------
       - name: Envoyer l'email de notification
         uses: dawidd6/action-send-mail@v3
         with:
@@ -65,4 +94,11 @@ jobs:
           subject: "Revue LLM pour PR #${{ github.event.pull_request.number }} par @${{ github.actor }}"
           to: ${{ secrets.TEAM_EMAIL_LIST }}
           from: "GitHub Actions <${{ secrets.MAIL_USERNAME }}>"
-          body: "Voici la revue générée par l'IA :\n\n${{ env.response }}"
+          body: |
+            Voici la revue générée par l'IA pour la Pull Request #${{ github.event.pull_request.number }} :
+
+            Auteur : @${{ github.actor }}
+
+            --- 
+
+            ${{ env.response }}
