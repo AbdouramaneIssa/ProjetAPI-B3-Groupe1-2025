@@ -1,0 +1,17 @@
+# Créer l'environnement virtuel
+python -m venv venv
+
+# Activer l'environnement virtuel
+.\venv\Scripts\activate
+
+# Installer les Dépendances
+pip install -r requirements.txt
+
+#Lancer le Serveur FastAPI
+powershell
+uvicorn main:app --reload
+
+
+Accès aux Interfaces
+Interface Web (Bootstrap) : http://127.0.0.1:8000/
+Documentation Swagger (API ) : http://127.0.0.1:8000/docs

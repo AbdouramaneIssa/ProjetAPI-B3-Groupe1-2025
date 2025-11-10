@@ -1,0 +1,20 @@
+# Python
+venv/
+*.pyc
+__pycache__/
+.env
+*.egg-info
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Git
+.git/
+.git-hooks/
+# Ajoutez ces lignes à la fin de votre fichier .gitignore
+test.py
+test_bad_code.py
