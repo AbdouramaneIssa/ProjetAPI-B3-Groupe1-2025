@@ -1,12 +1,36 @@
 # main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Path
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
+from typing import List, Optional # Ajoutez List et Optional pour les imports
 import os
+import uuid # Ajoutez uuid pour la fonction create_project
+from pydantic import BaseModel # Ajoutez BaseModel si vous gardez la simulation
 
-# Imports locaux
-from schemas import ProjectCreate, Project, GradeUpdate
-from db import load_db, save_db
+# Les imports locaux sont nécessaires et supposés exister dans le projet
+# Votre Chef de Groupe a défini ces modules :
+try:
+    from schemas import ProjectCreate, Project, GradeUpdate
+    from db import load_db, save_db
+except ImportError:
+    # Ceci est une solution temporaire pour les tests si les fichiers n'existent pas encore
+    print("ATTENTION: Les fichiers schemas.py ou db.py sont manquants. Le code pourrait échouer au lancement.")
+    
+    # --- SIMULATION DE db.py (temporaire) ---
+    def load_db(): return []
+    def save_db(data): pass
+    
+    # --- SIMULATION DE schemas.py (temporaire) ---
+    # Ces définitions sont nécessaires si les imports échouent
+    class ProjectCreate(BaseModel):
+        studentName: str
+        course: str
+        githubUrl: str
+    class Project(ProjectCreate):
+        id: str
+        grade: Optional[int] = None
+    class GradeUpdate(BaseModel):
+        grade: int
 
 # Définir le chemin de base pour les fichiers statiques
 STATIC_DIR = "static"
@@ -39,13 +63,29 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 1️⃣ Abdouramane — POST /projects
-# COLLER ICI ton endpoint POST /projects
+# Permet d'ajouter un nouveau projet étudiant dans la base de données.
+@app.post("/projects", response_model=Project, tags=["Projets"], status_code=201) # Fusion des deux versions ici
+def create_project(project: ProjectCreate):
+    projects = load_db()
+    # import uuid a été déplacé en haut
+    new_id = str(uuid.uuid4())[:8]
+    new_project = {
+        "id": new_id,
+        **project.model_dump(),
+        "grade": None,
+    }
+    projects.append(new_project)
+    save_db(projects)
+    return Project(**new_project)
 # ------------------------------------------------------------
 
 
 # ------------------------------------------------------------
 # ✅ 2️⃣ Elbachir — GET /projects
-# COLLER ICI ton endpoint list_projects()
+
+@app.get("/projects", response_model=List[Project])
+def list_projects():
+    return [Project(**p) for p in load_db()]
 # ------------------------------------------------------------
 
 
@@ -57,7 +97,11 @@ def read_root():
 
 # ------------------------------------------------------------
 # ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
-# COLLER ICI ton endpoint list_projects_by_course()
+@app.get("/projects/course/{course_name}", response_model=List[Project], tags=["Projets"])
+def list_projects_by_course(course_name: str):
+    projects = load_db()
+    filtered = [p for p in projects if p["course"].lower() == course_name.lower()]
+    return [Project(**p) for p in filtered]
 # ------------------------------------------------------------
 
 
