@@ -106,28 +106,23 @@ def list_projects_by_course(course_name: str):
 
 
 # ------------------------------------------------------------
-# ✅ 5️⃣ Elie-Junior — PUT /projects/{id}/grade (VOTRE CODE)
-# COLLER ICI ton endpoint grade_project()
-@app.put("/projects/{project_id}/grade", response_model=Project, tags=["Projets"])
-def grade_project(
-    # ARGUMENT OBLIGATOIRE EN PREMIER (CORRECTION DE LA SYNTAXE PYTHON)
-    grade_data: GradeUpdate,
-    # ARGUMENT AVEC VALEUR PAR DÉFAUT EN DEUXIÈME (FastAPI Path)
-    project_id: str = Path(..., description="ID du projet à noter"),
-):
+# ✅ 5️⃣ Elie-Junior — PUT /projects/{id}/grade
+@app.put("/projects/{project_id}/grade", response_model=Project)
+def grade_project(project_id: str, grade_data: GradeUpdate):
     projects = load_db()
-    project = next((p for p in projects if p["id"] == project_id), None)
 
+    project = next((p for p in projects if p["id"] == project_id), None)
     if not project:
         raise HTTPException(status_code=404, detail="Projet non trouvé")
 
-    # Mise à jour du grade (grade_data est garanti d'être présent)
-    project["grade"] = grade_data.grade
+    if not (0 <= grade_data.grade <= 20):
+        raise HTTPException(status_code=400, detail="La note doit être entre 0 et 20")
 
+    project["grade"] = grade_data.grade
     save_db(projects)
 
-    # Retourne le modèle Pydantic mis à jour
     return Project(**project)
+
 # ------------------------------------------------------------
 
 
