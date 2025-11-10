@@ -41,19 +41,6 @@ def read_root():
 # ✅ 1️⃣ Abdouramane — POST /projects
 # COLLER ICI ton endpoint POST /projects
 # Permet d'ajouter un nouveau projet étudiant dans la base de données.
-@app.post("/projects", response_model=Project, status_code=201)
-def create_project(project: ProjectCreate):
-    projects = load_db()
-    import uuid
-    new_id = str(uuid.uuid4())[:8]
-    new_project = {
-        "id": new_id,
-        **project.model_dump(),
-        "grade": None,
-    }
-    projects.append(new_project)
-    save_db(projects)
-    return Project(**new_project)
 
 # ------------------------------------------------------------
 
@@ -72,13 +59,6 @@ def create_project(project: ProjectCreate):
 
 # ------------------------------------------------------------
 # ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
-
-@app.get("/projects/course/{course_name}", response_model=List[Project])
-def list_projects_by_course(course_name: str):
-    projects = load_db()
-    filtered = [p for p in projects if p["course"].lower() == course_name.lower()]
-    return [Project(**p) for p in filtered]
-
 # ------------------------------------------------------------
 
 
@@ -91,6 +71,18 @@ def list_projects_by_course(course_name: str):
 # ------------------------------------------------------------
 # ✅ 6️⃣ Booz — DELETE /projects/{id}
 # COLLER ICI ton endpoint delete_project()
+@app.delete("/projects/{project_id}", status_code=204)
+def delete_project(project_id: str):
+    projects = load_db()
+    initial_len = len(projects)
+
+    projects[:] = [p for p in projects if p["id"] != project_id]
+
+    if len(projects) == initial_len:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+
+    save_db(projects)
+    return {"message": "Projet supprimé avec succès"}
 # ------------------------------------------------------------
 
 
