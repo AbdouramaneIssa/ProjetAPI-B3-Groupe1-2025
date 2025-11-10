@@ -64,6 +64,7 @@ def read_root():
 # ------------------------------------------------------------
 # ✅ 1️⃣ Abdouramane — POST /projects
 # Permet d'ajouter un nouveau projet étudiant dans la base de données.
+
 @app.post("/projects", response_model=Project, tags=["Projets"], status_code=201) # Fusion des deux versions ici
 def create_project(project: ProjectCreate):
     projects = load_db()
@@ -77,6 +78,7 @@ def create_project(project: ProjectCreate):
     projects.append(new_project)
     save_db(projects)
     return Project(**new_project)
+
 # ------------------------------------------------------------
 
 
@@ -97,6 +99,7 @@ def list_projects():
 
 # ------------------------------------------------------------
 # ✅ 4️⃣ Nambogona — GET /projects/course/{courseName}
+
 @app.get("/projects/course/{course_name}", response_model=List[Project], tags=["Projets"])
 def list_projects_by_course(course_name: str):
     projects = load_db()
@@ -129,6 +132,18 @@ def grade_project(project_id: str, grade_data: GradeUpdate):
 # ------------------------------------------------------------
 # ✅ 6️⃣ Booz — DELETE /projects/{id}
 # COLLER ICI ton endpoint delete_project()
+@app.delete("/projects/{project_id}", status_code=204)
+def delete_project(project_id: str):
+    projects = load_db()
+    initial_len = len(projects)
+
+    projects[:] = [p for p in projects if p["id"] != project_id]
+
+    if len(projects) == initial_len:
+        raise HTTPException(status_code=404, detail="Projet non trouvé")
+
+    save_db(projects)
+    return {"message": "Projet supprimé avec succès"}
 # ------------------------------------------------------------
 
 
