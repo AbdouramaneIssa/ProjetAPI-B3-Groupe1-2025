@@ -13,27 +13,37 @@ jobs:
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # ⚠️ Très important pour que git diff fonctionne correctement
 
-      - name: Récupérer le diff de la PR
+      - name: Obtenir le diff de la PR
         id: diff
         run: |
+          echo "📄 Récupération du diff de la PR..."
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD > diff.txt
+          # Récupération des commits exacts pour éviter le "no merge base"
+          base_sha=${{ github.event.pull_request.base.sha }}
+          head_sha=${{ github.event.pull_request.head.sha }}
+          echo "Comparaison entre $base_sha et $head_sha"
+          git diff $base_sha $head_sha > diff.txt
+          cat diff.txt
           echo "diff_content<<EOF" >> $GITHUB_ENV
           cat diff.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Appeler Gemini API pour analyse du code
+      - name: Appeler l'API Gemini pour l'analyse
         id: llm_call
         run: |
+          echo "🤖 Appel à l'API Gemini..."
           response=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
           -H "Content-Type: application/json" \
-          -d "{\"contents\": [{\"parts\":[{\"text\": \"Tu es un relecteur de code expert. Analyse ce diff et rédige un commentaire en français :\n\n${{ env.diff_content }}\"}]}]}" | jq -r '.candidates[0].content.parts[0].text')
+          -d "{\"contents\": [{\"parts\":[{\"text\": \"Tu es un relecteur de code expert. Analyse ce diff de code et écris un commentaire constructif en français :\n\n${{ env.diff_content }}\"}]}]}" \
+          | jq -r '.candidates[0].content.parts[0].text')
           echo "response<<EOF" >> $GITHUB_ENV
           echo "$response" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Commenter sur la PR
+      - name: Commenter sur la Pull Request
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
